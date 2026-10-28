@@ -32,3 +32,7 @@ Dependencies, builds, local environment files, and logs are ignored. Do not comm
 git remote add origin https://github.com/fakhrul62/desco-monitor.git
 git push -u origin main
 ```
+
+## Responsive browser checks
+
+After building, install the test browsers with `npx playwright-core install --with-deps chromium webkit`, then run `npm run test:mobile`. The script checks 320-1440px layouts in Chromium and WebKit, including a short phone viewport and landscape. It exercises sign-in errors, navigation, dates, charts, recharge details, and account management with sample data. It starts and stops its own local preview; no real DESCO accounts are required. To test an already running site, set `QA_URL`. Set `CHROMIUM_PATH` to use a local Chromium executable. Screenshots are saved under the ignored `test-results/` directory.
