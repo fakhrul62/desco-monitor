@@ -10,3 +10,7 @@ test-results/
 desco-monitor-backup*.json
 *.sqlite*
 *.csv
+
+.vercel/
+.vercel
+.env*

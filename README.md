@@ -18,7 +18,7 @@ The server listens on loopback by default. Set `HOST`, `PORT`, and optionally `C
 
 ## Hosting and privacy
 
-This is a Node.js app with a server-side DESCO collector, not a static GitHub Pages site. Hosting must support a long-running Node process and a compatible headless Chromium browser. For remote hosting, bind to `0.0.0.0` behind an HTTPS reverse proxy with authentication and access controls. The collector has basic per-IP and concurrency limits, not complete public abuse protection. DESCO account numbers are identifiers, not passwords or proof of ownership.
+This app includes Vercel functions for the DESCO collector and a static Vite frontend. Deploy the repository on Vercel using the included vercel.json; the function bundles a serverless Chromium browser for the DESCO fallback. For other hosts, run the Node server with Chrome, Edge, or Chromium installed. GitHub Pages alone cannot run the collector. For remote hosting, bind to `0.0.0.0` behind an HTTPS reverse proxy with authentication and access controls. The collector has basic per-IP and concurrency limits, not complete public abuse protection. DESCO account numbers are identifiers, not passwords or proof of ownership.
 
 The browser sends the account or meter number and previous snapshot to the server to retrieve DESCO data. The app does not persist readings on the server. Browser storage is specific to the browser and origin, is not encrypted, and can be cleared. Settings provides a backup download and restore; backups contain sensitive account and consumption data. Protect them and use HTTPS remotely. Notifications require permission and HTTPS or localhost. Scheduled refresh and notifications work only while the tab is open and the computer is awake.
 

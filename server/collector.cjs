@@ -36,7 +36,7 @@ function normalize(info,responses,previous=null,now=new Date()){
  return {account:String(info.accountNo),meter:String(info.meterNo),name:info.customerName||'',tariff:info.tariffSolution||'',area:info.SDName||'',load:number(info.sanctionLoad),fetchedAt:now.toISOString(),balance:balance?number(balance.balance):previous?.balance??null,balanceAt:balance?localTime(balance.readingTime):previous?.balanceAt||null,balanceTimeKnown:balance?Boolean(/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}/.test(String(balance.readingTime||''))):previous?.balanceTimeKnown??false,balanceFetchedAt:balance?now.toISOString():previous?.balanceFetchedAt||null,usageMonth:latest?month:previous?.usageMonth||month,usageThrough:latest?.date||previous?.usageThrough||null,monthCost:latest?number(latest.consumedTaka):previous?.monthCost??null,monthKwh:latest?units:previous?.monthKwh??null,monthRecharged:round(recharges.filter(r=>r.at?.startsWith(month)).reduce((s,r)=>s+(r.amount||0),0)),yearRecharged:round(recharges.filter(r=>r.at?.startsWith(today.slice(0,4))).reduce((s,r)=>s+(r.amount||0),0)),monthly,daily,recharges,warnings,sections:Object.fromEntries(Object.entries(responses).map(([k,r])=>[k,{ok:!r.error,at:r.error?previous?.sections?.[k]?.at||null:now.toISOString()}]))};
 }
 class Collector{
- constructor(directory,browserPath){this.directory=directory;this.browserPath=browserPath;this.cancelled=false;}
+ constructor(directory,browserPath,browserOptions){this.directory=directory;this.browserPath=browserPath;this.browserOptions=browserOptions;this.cancelled=false;}
  async collect(account,previous){
    this.cancelled=false;this.client=await request.newContext({baseURL:ORIGIN,timeout:45000,extraHTTPHeaders:{Referer:ORIGIN+'/customer/','Accept':'application/json'}});
    const query=account.length>10?{accountNo:'',meterNo:account}:{accountNo:account,meterNo:''};
@@ -62,8 +62,8 @@ class Collector{
    }finally{await this.client?.dispose().catch(()=>{});this.client=null;await this.browser?.close().catch(()=>{});this.browser=null;this.page=null;}
  }
  async browserFallback(account){
-   if(!fs.existsSync(this.browserPath))throw Error('The bundled background browser is missing. Reinstall Desco Monitor.');
-   this.browser=await chromium.launch({executablePath:this.browserPath,headless:true});
+   if(this.browserOptions)this.browser=await chromium.launch({...await this.browserOptions(),headless:true});
+   else{if(!fs.existsSync(this.browserPath))throw Error('The bundled background browser is missing. Reinstall Desco Monitor.');this.browser=await chromium.launch({executablePath:this.browserPath,headless:true});}
    const context=await this.browser.newContext();const page=await context.newPage();let result;const missing=new Set();let reportMissing;const missingResult=new Promise(resolve=>{reportMissing=resolve});
    page.on('response',async r=>{if(r.url().includes('/customer/getCustomerInfo')){try{const json=await r.json();const platform=r.url().includes('/tkdes/')?'tkdes':'unified';if(json.data?.accountNo)result={info:json.data,platform};else if([16001,16002].includes(Number(json.code))||/does not exist|does not exists/i.test(String(json.desc||''))){missing.add(platform);if(missing.size===2)reportMissing('missing');}}catch{}}});
    await page.goto(ORIGIN+'/customer/#/customer-login',{waitUntil:'domcontentloaded',timeout:90000});
